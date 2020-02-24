@@ -175,8 +175,29 @@ protected:
         bool traverseCFG(const Function & func)
         {
                 // @TODO
-                return false;
+                // Initialize all basic blocks.
+                std::unordered_map<const BasicBlock *, BitVector> out;  
+                std::unordered_map<const BasicBlock *, BitVector> in;  
+                for (auto & bb : func)
+                {
+                        // Set to initial condition 
+                        if (direction_c == Forward)
+                        {
+                                out[&bb] = IC();
+                        }
+                        else
+                        {
+                                in[&bb] = IC();
+                        } 
+                }
+                bool changes = true;
+
+                // Loop.
+                while (changes)
+                {
+                }
         }
+
 public:
         Framework(char ID) : FunctionPass(ID) {}
         virtual ~Framework() override {}
