@@ -2,6 +2,9 @@ FROM ubuntu:18.04
 
 ENV LLVM_VERSION=6.0
 
+WORKDIR "/root"
+COPY [".vimrc", ".vimrc"]
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         vim git ca-certificates \
