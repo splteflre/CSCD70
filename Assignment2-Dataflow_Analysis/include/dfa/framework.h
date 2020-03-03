@@ -239,28 +239,28 @@ protected:
                             change = TransferFunc(inst, in_b
 
 
-                                    }
-                                    else
-                                    {
-                                    // IN[inst] is the OUT of the previous instruction
-                                    auto prev = inst.getPrevNode();
-                                    change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
-                                    }
-                                    }
-                                    else
-                                    {
-                                    if ((&inst) == LLVMGetLastInstruction(currBlock))
-                                    {
-                                    // Last instruction, apply the Meet Operator to successors
-                                    // TODO Jack you bitch
-                                    }        
-                                    else
-                                    {
-                                    // OUT[inst] is the IN of the next instruction
-                                        auto next = inst.getNextNode();
-                                        change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
-                                    }
-                                    }
+                        }
+                        else
+                        {
+                            // IN[inst] is the OUT of the previous instruction
+                            auto prev = inst.getPrevNode();
+                            change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
+                        }
+                    }
+                    else
+                    {
+                        if ((&inst) == LLVMGetLastInstruction(currBlock))
+                        {
+                            // Last instruction, apply the Meet Operator to successors
+                            // TODO Jack you bitch
+                        }        
+                        else
+                        {
+                            // OUT[inst] is the IN of the next instruction
+                            auto next = inst.getNextNode();
+                            change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
+                        }
+                    }
                 }
             }
             return change;
