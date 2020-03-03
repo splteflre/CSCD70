@@ -176,45 +176,46 @@ protected:
         traverseCFG(const Function & func)
         {
                 bool change = false;
-                for (const auto & bb : func)
+                Function & F = const_cast<Function &>(func); //Honestly not sure how to deal with this, there's probably a better way but fuck it.
+                ReversePostOrderTraversal<Function *> RPOT(&F); //Apparently this is the style for doing RPOT.
+                for (ReversePostOrderTraversal<Function *>::rpo_iterator RI = RPOT.begin(), RE = RPOT.end(); RI != RE; ++RI)
                 {
-                    for (const auto & inst : bb)
-                    {
-                            // Get current basic block
-                            const BasicBlock * currBlock = inst.getParent();
-                            if (direction_c == Direction::Forward)
-                            {
-                                    if ((&inst) == LLVMGetFirstInstruction(currBlock))
-                                    {
-                                            // First instruction, apply the Meet Operator to parents
-                                            // TODO Jack you bitch
-                                            BitVector *in_b = &(MeetOp(MeetOperands(*currBlock)));
-                                            change = TransferFunc(inst, in_b
-                                            
-                                            
-                                    }
-                                    else
-                                    {
-                                            // IN[inst] is the OUT of the previous instruction
-                                            auto prev = inst.getPrevNode();
-                                            change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
-                                    }
-                            }
-                            else
-                            {
-                                    if ((&inst) == LLVMGetLastInstruction(currBlock))
-                                    {
-                                            // Last instruction, apply the Meet Operator to successors
-                                            // TODO Jack you bitch
-                                    }        
-                                    else
-                                    {
-                                            // OUT[inst] is the IN of the next instruction
-                                            auto next = inst.getNextNode();
-                                            change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
-                                    }
-                            }
-                    }
+                        // Fuck you Jack stop cooking
+                        BasicBlock * jackYouLazyPieceOfShit = *RI;
+                        for (const auto & inst : *jackYouLazyPieceOfShit)
+                        {
+                                // Get current basic block
+                                if (direction_c == Direction::Forward)
+                                {
+                                        if ((&inst) == LLVMGetFirstInstruction(jackYouLazyPieceOfShit))
+                                        {
+                                                // First instruction, apply the Meet Operator to parents
+                                                // TODO Jack you bitch
+                                                //BitVector *in_b = &(MeetOp(MeetOperands(*currBlock)));
+                                                //change = TransferFunc(inst, in_b
+                                        }
+                                        else
+                                        {
+                                                // IN[inst] is the OUT of the previous instruction
+                                                auto prev = inst.getPrevNode();
+                                                change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
+                                        }
+                                }
+                                else
+                                {
+                                        if ((&inst) == LLVMGetLastInstruction(jackYouLazyPieceOfShit))
+                                        {
+                                                // Last instruction, apply the Meet Operator to successors
+                                                // TODO Jack you bitch
+                                        }        
+                                        else
+                                        {
+                                                // OUT[inst] is the IN of the next instruction
+                                                auto next = inst.getNextNode();
+                                                change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
+                                        }
+                                }
+                        }
                 }
                 return change;
         }
@@ -223,9 +224,10 @@ protected:
         traverseCFG(const Function & func) 
         {
             bool change = false;
-            for (const auto & bb : func)
+            for (po_iterator<BasicBlock *> I = po_begin(&func.getEntryBlock()), IE = po_end(&func.getEntryBlock()); I != IE; ++I)
             {
-                for (const auto & inst : bb)
+                BasicBlock* bb = *I;
+                for (const auto & inst : (*bb))
                 {
                     // Get current basic block
                     const BasicBlock * currBlock = inst.getParent();
@@ -236,9 +238,6 @@ protected:
                             // First instruction, apply the Meet Operator to parents
                             // TODO Jack you bitch
                             BitVector *in_b = &(MeetOp(MeetOperands(*currBlock)));
-                            change = TransferFunc(inst, in_b
-
-
                         }
                         else
                         {
