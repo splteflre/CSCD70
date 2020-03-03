@@ -172,49 +172,104 @@ private:
                 return make_range(bb.begin(), bb.end());
         }
 protected:
-        bool traverseCFG(const Function & func)
+        METHOD_ENABLE_IF_DIRECTION(Direction::Forward, bool)
+        traverseCFG(const Function & func)
         {
                 bool change = false;
-                for (const auto & inst : instructions(func))
+                for (const auto & bb : func)
                 {
-                        // Get current basic block
-                        const BasicBlock * currBlock = inst.getParent();
-                        if (direction_c == Direction::Forward)
-                        {
-                                if ((&inst) == LLVMGetFirstInstruction(currBlock))
-                                {
-                                        // First instruction, apply the Meet Operator to parents
-                                        // TODO Jack you bitch
-                                }
-                                else
-                                {
-                                        // IN[inst] is the OUT of the previous instruction
-                                        auto prev = inst.getPrevNode();
-                                        change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
-                                }
-                        }
-                        else
-                        {
-                                if ((&inst) == LLVMGetLastInstruction(currBlock))
-                                {
-                                        // Last instruction, apply the Meet Operator to successors
-                                        // TODO Jack you bitch
-                                }        
-                                else
-                                {
-                                        // OUT[inst] is the IN of the next instruction
-                                        auto next = inst.getNextNode();
-                                        change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
-                                }
-                        }
+                    for (const auto & inst : bb)
+                    {
+                            // Get current basic block
+                            const BasicBlock * currBlock = inst.getParent();
+                            if (direction_c == Direction::Forward)
+                            {
+                                    if ((&inst) == LLVMGetFirstInstruction(currBlock))
+                                    {
+                                            // First instruction, apply the Meet Operator to parents
+                                            // TODO Jack you bitch
+                                            BitVector *in_b = &(MeetOp(MeetOperands(*currBlock)));
+                                            change = TransferFunc(inst, in_b
+                                            
+                                            
+                                    }
+                                    else
+                                    {
+                                            // IN[inst] is the OUT of the previous instruction
+                                            auto prev = inst.getPrevNode();
+                                            change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
+                                    }
+                            }
+                            else
+                            {
+                                    if ((&inst) == LLVMGetLastInstruction(currBlock))
+                                    {
+                                            // Last instruction, apply the Meet Operator to successors
+                                            // TODO Jack you bitch
+                                    }        
+                                    else
+                                    {
+                                            // OUT[inst] is the IN of the next instruction
+                                            auto next = inst.getNextNode();
+                                            change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
+                                    }
+                            }
+                    }
                 }
                 return change;
+        }
+
+        METHOD_ENABLE_IF_DIRECTION(Direction::Backward, bool)
+        traverseCFG(const Function & func) 
+        {
+            bool change = false;
+            for (const auto & bb : func)
+            {
+                for (const auto & inst : bb)
+                {
+                    // Get current basic block
+                    const BasicBlock * currBlock = inst.getParent();
+                    if (direction_c == Direction::Forward)
+                    {
+                        if ((&inst) == LLVMGetFirstInstruction(currBlock))
+                        {
+                            // First instruction, apply the Meet Operator to parents
+                            // TODO Jack you bitch
+                            BitVector *in_b = &(MeetOp(MeetOperands(*currBlock)));
+                            change = TransferFunc(inst, in_b
+
+
+                                    }
+                                    else
+                                    {
+                                    // IN[inst] is the OUT of the previous instruction
+                                    auto prev = inst.getPrevNode();
+                                    change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
+                                    }
+                                    }
+                                    else
+                                    {
+                                    if ((&inst) == LLVMGetLastInstruction(currBlock))
+                                    {
+                                    // Last instruction, apply the Meet Operator to successors
+                                    // TODO Jack you bitch
+                                    }        
+                                    else
+                                    {
+                                    // OUT[inst] is the IN of the next instruction
+                                        auto next = inst.getNextNode();
+                                        change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
+                                    }
+                                    }
+                }
+            }
+            return change;
         }
 
         // These methods included from LLVM's source code.
         // That way we can call newer LLVM Functions.
         // I wouldn't have to do this if we could just UPGRADE THE LLVM
-        // LIBRARY. HINT @#$%ING HINT.
+        // LIBRARY. HINT HINT.
         static Instruction * LLVMGetFirstInstruction(const BasicBlock * Block)
         {
                 BasicBlock::const_iterator I = Block->begin();
@@ -273,4 +328,4 @@ public:
 #undef METHOD_ENABLE_IF_DIRECTION
 };
 
-}  // namespace dfa
+}  // namespace fa
