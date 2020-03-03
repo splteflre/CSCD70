@@ -174,29 +174,63 @@ private:
 protected:
         bool traverseCFG(const Function & func)
         {
-                // @TODO
-                // Initialize all basic blocks.
-                std::unordered_map<const BasicBlock *, BitVector> out;  
-                std::unordered_map<const BasicBlock *, BitVector> in;  
-                for (auto & bb : func)
+                bool change = false;
+                for (const auto & inst : instructions(func))
                 {
-                        // Set to initial condition 
-                        if (direction_c == Forward)
+                        // Get current basic block
+                        const BasicBlock * currBlock = inst.getParent();
+                        if (direction_c == Direction::Forward)
                         {
-                                out[&bb] = IC();
+                                if ((&inst) == LLVMGetFirstInstruction(currBlock))
+                                {
+                                        // First instruction, apply the Meet Operator to parents
+                                        // TODO Jack you bitch
+                                }
+                                else
+                                {
+                                        // IN[inst] is the OUT of the previous instruction
+                                        auto prev = inst.getPrevNode();
+                                        change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
+                                }
                         }
                         else
                         {
-                                in[&bb] = IC();
-                        } 
+                                if ((&inst) == LLVMGetLastInstruction(currBlock))
+                                {
+                                        // Last instruction, apply the Meet Operator to successors
+                                        // TODO Jack you bitch
+                                }        
+                                else
+                                {
+                                        // OUT[inst] is the IN of the next instruction
+                                        auto next = inst.getNextNode();
+                                        change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
+                                }
+                        }
                 }
-                bool changes = true;
-
-                // Loop.
-                while (changes)
-                {
-                }
+                return change;
         }
+
+        // These methods included from LLVM's source code.
+        // That way we can call newer LLVM Functions.
+        // I wouldn't have to do this if we could just UPGRADE THE LLVM
+        // LIBRARY. HINT @#$%ING HINT.
+        static Instruction * LLVMGetFirstInstruction(const BasicBlock * Block)
+        {
+                BasicBlock::const_iterator I = Block->begin();
+                if (I == Block->end())
+                        return nullptr;
+                return const_cast<Instruction *>(&*I);
+        }
+         
+        static Instruction * LLVMGetLastInstruction(const BasicBlock * Block)
+        {
+                BasicBlock::const_iterator I = Block->end();
+                        if (I == Block->begin())
+                                return nullptr;
+                return const_cast<Instruction *>(&(*(--I)));
+        }
+
 
 public:
         Framework(char ID) : FunctionPass(ID) {}
