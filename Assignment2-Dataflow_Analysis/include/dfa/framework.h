@@ -212,7 +212,7 @@ protected:
                 for (ReversePostOrderTraversal<Function *>::rpo_iterator RI = RPOT.begin(), RE = RPOT.end(); RI != RE; ++RI)
                 {
                         // iterate through the instructions of the basic block
-                        BasicBlock * bb = *RI;
+                        BasicBlock *bb = *RI;
                         for (const auto & inst : *bb)
                         {
                                 // Get current basic block
@@ -220,7 +220,7 @@ protected:
                                 {
                                         // First instruction, apply the Meet Operator to parents
                                         // TODO Jack you bitch
-                                        change = TransferFunc(inst, MeetOp(MeetOperands(bb)), _inst_bv_map[&inst]) || change;
+                                        change = TransferFunc(inst, MeetOp(MeetOperands(*bb)), _inst_bv_map[&inst]) || change;
                                 }
                                 else
                                 {
@@ -239,23 +239,23 @@ protected:
             bool change = false;
             for (po_iterator<BasicBlock *> I = po_begin(&func.getEntryBlock()), IE = po_end(&func.getEntryBlock()); I != IE; ++I)
             {
-                BasicBlock* bb = *I;
+                BasicBlock *bb = *I;
                 //for (const auto & inst : *bb)
                 for (BasicBlock::reverse_iterator inst = bb->rbegin(), e = bb->rend(); inst != e; ++inst)
                 {
 
                     // Get current basic block
-                        if ((&inst) == LLVMGetLastInstruction(bb))
+                        if (&(*inst) == LLVMGetLastInstruction(bb))
                         {
                             // Last instruction, apply the Meet Operator to successors
                             // TODO Jack you bitch
-                            change = TransferFunc(inst, MeetOp(MeetOperands(bb)), _inst_bv_map[&inst]) || change;
+                            change = TransferFunc(inst, MeetOp(MeetOperands(bb)), _inst_bv_map[(&(*inst))]) || change;
                         }        
                         else
                         {
                             // OUT[inst] is the IN of the next instruction
-                            auto next = inst.getNextNode();
-                            change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
+                            auto next = (*inst).getNextNode();
+                            change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[(&(*inst))]) || change;
                         }
                 }
             }
