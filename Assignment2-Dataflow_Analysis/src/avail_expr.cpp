@@ -10,12 +10,16 @@ public:
         Expression(const Instruction & inst)
         {
                 // @TODO
+                _opcode = inst.getOpcode();
+                _lhs = inst.getOperand(0);
+                _rhs = inst.getOperand(1);
         }
 
         bool operator==(const Expression & Expr) const
         {
                 // @TODO
-                return false;
+                return (this->_opcode == Expr->_opcode && this->_lhs == Expr->lhs && this->_rhs == Expr->_rhs)
+                //return false;
         }
 
         unsigned getOpcode() const { return _opcode; }
@@ -65,7 +69,7 @@ protected:
         virtual BitVector IC() const override
         {
                 // @TODO
-                return BitVector(_domain.size());
+                return BitVector(_domain.size(), true);
         }
         virtual BitVector BC() const override
         {
@@ -75,7 +79,14 @@ protected:
         virtual BitVector MeetOp(const meetop_const_range & meet_operands) const override
         {
                 // @TODO
-                return BitVector(_domain.size());
+                auto ret = std::begin(meet_operands);
+
+                for(auto &operand : meet_operands){
+                        ret &= operand;
+                }
+
+ 
+                return ret;
         }
         virtual bool TransferFunc(const Instruction & inst,
                                   const BitVector & ibv,
