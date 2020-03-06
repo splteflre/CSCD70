@@ -5,6 +5,8 @@ ENV LLVM_VERSION=6.0
 WORKDIR "/root"
 COPY [".vimrc", ".vimrc"]
 
+WORKDIR "/a2"
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         vim git ca-certificates \
