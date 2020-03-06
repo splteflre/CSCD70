@@ -34,6 +34,16 @@ struct FrameworkMetaHelper < Direction::Forward >
                 inst_traversal_const_range;
 };
 
+template <>
+struct FrameworkMetaHelper < Direction::Backward >
+{
+    typedef succ_const_iterator  meetop_const_range;
+    typedef iterator_range < Function::BasicBlockListType::const_reverse_iterator >
+        bb_traversal_const_range;
+    typedef iterator_range < BasicBlock::const_reverse_iterator >
+        inst_traversal_const_range;
+};
+
 /// Dataflow Analysis Framework
 /// 
 /// @tparam TDomainElement  Domain Element
@@ -138,6 +148,13 @@ protected:
         {
                 return predecessors(&bb);
         }
+
+        METHOD_ENABLE_IF_DIRECTION(Direction::Backward, meetop_const_range)
+            MeetOperands(const BasicBlock & bb) const
+            {
+                // TODO GET THE SUCCESSORS
+                return successors(&bb);
+            }
         /// @brief Apply the meet operation to a range of @p `meet_operands`.
         /// 
         /// @return the Resulting BitVector after the Meet Operation
@@ -171,49 +188,45 @@ private:
         {
                 return make_range(bb.begin(), bb.end());
         }
+
+        // Reverse CFG traversal
+        METHOD_ENABLE_IF_DIRECTION(Direction::Backward, bb_traversal_const_range)
+            BBTraversalOrder(const Function & F) const
+            {
+                return make_range(F.begin(), F.end());
+            }
+
+        METHOD_ENABLE_IF_DIRECTION(Direction::Backward, inst_traversal_const_range)
+            InstTraversalOrder(const BasicBlock & bb) const
+            {
+                return make_range(bb.begin(), bb.end());
+            }
 protected:
         METHOD_ENABLE_IF_DIRECTION(Direction::Forward, bool)
         traverseCFG(const Function & func)
         {
+
                 bool change = false;
                 Function & F = const_cast<Function &>(func); //Honestly not sure how to deal with this, there's probably a better way but fuck it.
                 ReversePostOrderTraversal<Function *> RPOT(&F); //Apparently this is the style for doing RPOT.
                 for (ReversePostOrderTraversal<Function *>::rpo_iterator RI = RPOT.begin(), RE = RPOT.end(); RI != RE; ++RI)
                 {
-                        // Fuck you Jack stop cooking
-                        BasicBlock * jackYouLazyPieceOfShit = *RI;
-                        for (const auto & inst : *jackYouLazyPieceOfShit)
+                        // iterate through the instructions of the basic block
+                        BasicBlock * bb = *RI;
+                        for (const auto & inst : *bb)
                         {
                                 // Get current basic block
-                                if (direction_c == Direction::Forward)
+                                if ((&inst) == LLVMGetFirstInstruction(bb))
                                 {
-                                        if ((&inst) == LLVMGetFirstInstruction(jackYouLazyPieceOfShit))
-                                        {
-                                                // First instruction, apply the Meet Operator to parents
-                                                // TODO Jack you bitch
-                                                //BitVector *in_b = &(MeetOp(MeetOperands(*currBlock)));
-                                                //change = TransferFunc(inst, in_b
-                                        }
-                                        else
-                                        {
-                                                // IN[inst] is the OUT of the previous instruction
-                                                auto prev = inst.getPrevNode();
-                                                change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
-                                        }
+                                        // First instruction, apply the Meet Operator to parents
+                                        // TODO Jack you bitch
+                                        change = TransferFunc(inst, MeetOp(MeetOperands(bb)), _inst_bv_map[&inst]) || change;
                                 }
                                 else
                                 {
-                                        if ((&inst) == LLVMGetLastInstruction(jackYouLazyPieceOfShit))
-                                        {
-                                                // Last instruction, apply the Meet Operator to successors
-                                                // TODO Jack you bitch
-                                        }        
-                                        else
-                                        {
-                                                // OUT[inst] is the IN of the next instruction
-                                                auto next = inst.getNextNode();
-                                                change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
-                                        }
+                                        // IN[inst] is the OUT of the previous instruction
+                                        auto prev = inst.getPrevNode();
+                                        change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
                                 }
                         }
                 }
@@ -227,31 +240,16 @@ protected:
             for (po_iterator<BasicBlock *> I = po_begin(&func.getEntryBlock()), IE = po_end(&func.getEntryBlock()); I != IE; ++I)
             {
                 BasicBlock* bb = *I;
-                for (const auto & inst : (*bb))
+                //for (const auto & inst : *bb)
+                for (BasicBlock::reverse_iterator inst = bb->rbegin(), e = bb->rend(); inst != e; ++inst)
                 {
+
                     // Get current basic block
-                    const BasicBlock * currBlock = inst.getParent();
-                    if (direction_c == Direction::Forward)
-                    {
-                        if ((&inst) == LLVMGetFirstInstruction(currBlock))
-                        {
-                            // First instruction, apply the Meet Operator to parents
-                            // TODO Jack you bitch
-                            BitVector *in_b = &(MeetOp(MeetOperands(*currBlock)));
-                        }
-                        else
-                        {
-                            // IN[inst] is the OUT of the previous instruction
-                            auto prev = inst.getPrevNode();
-                            change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
-                        }
-                    }
-                    else
-                    {
-                        if ((&inst) == LLVMGetLastInstruction(currBlock))
+                        if ((&inst) == LLVMGetLastInstruction(bb))
                         {
                             // Last instruction, apply the Meet Operator to successors
                             // TODO Jack you bitch
+                            change = TransferFunc(inst, MeetOp(MeetOperands(bb)), _inst_bv_map[&inst]) || change;
                         }        
                         else
                         {
@@ -259,7 +257,6 @@ protected:
                             auto next = inst.getNextNode();
                             change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[&inst]) || change;
                         }
-                    }
                 }
             }
             return change;
@@ -268,7 +265,7 @@ protected:
         // These methods included from LLVM's source code.
         // That way we can call newer LLVM Functions.
         // I wouldn't have to do this if we could just UPGRADE THE LLVM
-        // LIBRARY. HINT HINT.
+        // LIBRARY. HINT HINT. Please upgrade the llvm library.
         static Instruction * LLVMGetFirstInstruction(const BasicBlock * Block)
         {
                 BasicBlock::const_iterator I = Block->begin();
