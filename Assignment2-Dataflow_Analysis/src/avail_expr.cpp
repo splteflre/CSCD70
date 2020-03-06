@@ -89,7 +89,12 @@ protected:
                 // try to insert the instruction into the domain, and throw an
                 // `invalid_argument` exception if failed
                 try {
-                        _domain.emplace(inst);
+                        Expression curr_exp = Expression(inst);
+                        if (_domain.find(curr_exp) != _domain.end())
+                        {
+                                _domain.insert(curr_exp);
+                                _domain_bit_index_map[curr_exp] = _most_recent_bit_index;
+                        }
                 } catch (const std::invalid_argument & ia_except) {}
         }
 public:
