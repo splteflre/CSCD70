@@ -9,15 +9,14 @@ class Variable
 private:
         const Value * _val;
 public:
-        Variable(const Instruction & inst)
+        Variable(const Value & val):
+        _val(&val)
         {
-                // @TODO
         }
 
         bool operator==(const Variable & other) const
         {
-                // @TODO
-                return false;
+                return (this->_val == other._val);
         }
 
         const Value * getVal() const { return _val; }
@@ -48,7 +47,7 @@ struct hash < Variable >
                 std::hash < const Value * > pvalue_hasher;
                 std::size_t val_hash = pvalue_hasher((var.getVal()));
 
-                return (val_hash << 1) ^ (13);
+                return (val_hash << 1) ^ (1934773);
         }
 };
 }
@@ -64,32 +63,21 @@ public:
         Liveness() : dfa::Framework<domain_element_t, direction_c>(ID) {}
         virtual ~Liveness() override {}
 
-        // @TODO Add or remove method definitions if necessary.
-
         virtual void getAnalysisUsage(AnalysisUsage &AU) const override
         {
                 AU.setPreservesAll();
         }
 
-        /*
-        virtual bool runOnFunction(Function &func) override
-        {
-                return false;
-        }
-        */
         virtual BitVector IC() const override
         {
-                // @TODO
-                return BitVector(_domain.size());
+                return BitVector(_domain.size(), false);
         }
         virtual BitVector BC() const override
         {
-                // @TODO
-                return BitVector(_domain.size());
+                return BitVector(_domain.size(), false);
         }
         virtual BitVector MeetOp(const meetop_const_range & meet_operands) const override
         {
-                // @TODO
                 return BitVector(_domain.size());
         }
         virtual bool TransferFunc(const Instruction & inst,
@@ -101,6 +89,24 @@ public:
         }
         virtual void InitializeDomainFromInstruction(const Instruction & inst) override
         {
+                // Add each operand
+                for (auto iter = inst.op_begin(); iter != inst.op_end(); ++iter)
+                {
+                        Value * val = *iter;
+                        if (isa<Instruction>(val) || isa<Argument>(val))
+                        {
+                                try
+                                {
+                                        _domain.emplace(*val);
+                                }
+                                catch (const std::invalid_argument & ia_except) {}        
+                        }
+                }
+                try
+                {
+                        _domain.emplace(inst);
+                }
+                catch (const std::invalid_argument & ia_except) {}        
         }
 protected:
 };
