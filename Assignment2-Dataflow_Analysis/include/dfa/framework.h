@@ -38,7 +38,7 @@ struct FrameworkMetaHelper < Direction::Forward >
 template <>
 struct FrameworkMetaHelper < Direction::Backward >
 {
-    typedef succ_const_iterator  meetop_const_range;
+    typedef succ_const_range  meetop_const_range;
     typedef iterator_range < Function::BasicBlockListType::const_reverse_iterator >
         bb_traversal_const_range;
     typedef iterator_range < BasicBlock::const_reverse_iterator >
@@ -102,6 +102,35 @@ private:
                 const BasicBlock * const pbb = inst.getParent();
 
                 if (&inst == &(*pbb->begin()))
+                {
+                        meetop_const_range meet_operands = MeetOperands(*pbb);
+                        // If the list of meet operands is empty, then we are at
+                        // the boundary, hence print the BC.
+                        if (meet_operands.begin() == meet_operands.end())
+                        {
+                                outs() << "BC:\t";
+                                printDomainWithMask(BC());
+                                outs() << "\n";
+                        }
+                        else
+                        {
+                                outs() << "MeetOp:\t";
+                                printDomainWithMask(MeetOp(meet_operands));
+                                outs() << "\n";
+                        }
+                }
+                outs() << "Instruction: " << inst << "\n";
+                outs() << "\t";
+                printDomainWithMask(_inst_bv_map.at(&inst));
+                outs() << "\n";
+        }
+
+        METHOD_ENABLE_IF_DIRECTION(Direction::Backward, void)
+        printInstBV(const Instruction & inst) const
+        {
+                const BasicBlock * const pbb = inst.getParent();
+
+                if (&inst == &(*(--(pbb->end())))) //lotsa brackets lmao
                 {
                         meetop_const_range meet_operands = MeetOperands(*pbb);
                         // If the list of meet operands is empty, then we are at

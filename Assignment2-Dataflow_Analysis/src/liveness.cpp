@@ -9,6 +9,11 @@ class Variable
 private:
         const Value * _val;
 public:
+        Variable(const Instruction & inst)
+        {
+                // @TODO
+        }
+
         bool operator==(const Variable & other) const
         {
                 // @TODO
@@ -17,9 +22,19 @@ public:
 
         const Value * getVal() const { return _val; }
 
-        //friend raw_ostream & operator<<(raw_ostream & outs, const Expression & expr);
 
+        friend raw_ostream & operator<<(raw_ostream & outs, const Variable & var);
 }; 
+
+raw_ostream & operator<<(raw_ostream & outs, const Variable & expr)
+{
+        outs << "[";
+        expr._val->printAsOperand(outs, false);
+        outs << "]";
+
+        return outs;
+}
+
 }
 
 namespace std {
@@ -46,7 +61,7 @@ class Liveness final : public dfa::Framework < Variable,
 public:
         static char ID;
 
-        Liveness() : FunctionPass(ID) {}
+        Liveness() : dfa::Framework<domain_element_t, direction_c>(ID) {}
         virtual ~Liveness() override {}
 
         // @TODO Add or remove method definitions if necessary.
@@ -62,6 +77,32 @@ public:
                 return false;
         }
         */
+        virtual BitVector IC() const override
+        {
+                // @TODO
+                return BitVector(_domain.size());
+        }
+        virtual BitVector BC() const override
+        {
+                // @TODO
+                return BitVector(_domain.size());
+        }
+        virtual BitVector MeetOp(const meetop_const_range & meet_operands) const override
+        {
+                // @TODO
+                return BitVector(_domain.size());
+        }
+        virtual bool TransferFunc(const Instruction & inst,
+                                  const BitVector & ibv,
+                                  BitVector & obv) override
+        {
+                // @TODO
+                return false;
+        }
+        virtual void InitializeDomainFromInstruction(const Instruction & inst) override
+        {
+        }
+protected:
 };
 
 char Liveness::ID = 1; 
