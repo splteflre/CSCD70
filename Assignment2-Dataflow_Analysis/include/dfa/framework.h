@@ -8,6 +8,7 @@
 
 #include <llvm/Pass.h>
 #include <llvm/ADT/BitVector.h>
+#include "llvm/ADT/SCCIterator.h"
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Function.h>
@@ -219,7 +220,6 @@ protected:
                                 if ((&inst) == LLVMGetFirstInstruction(bb))
                                 {
                                         // First instruction, apply the Meet Operator to parents
-                                        // TODO Jack you bitch
                                         change = TransferFunc(inst, MeetOp(MeetOperands(*bb)), _inst_bv_map[&inst]) || change;
                                 }
                                 else
@@ -237,8 +237,8 @@ protected:
         traverseCFG(const Function & func) 
         {
             bool change = false;
-            for (po_iterator<BasicBlock *> I = po_begin(&func.getEntryBlock()), IE = po_end(&func.getEntryBlock()); I != IE; ++I)
-            {
+            Function & F = const_cast<Function &>(func); // One day I'll figure out how const works with C++ and iterators because this is bullshit
+            for (po_iterator<BasicBlock *> I = po_begin(&F.getEntryBlock()), IE = po_end(&F.getEntryBlock()); I != IE; ++I) {
                 BasicBlock *bb = *I;
                 //for (const auto & inst : *bb)
                 for (BasicBlock::reverse_iterator inst = bb->rbegin(), e = bb->rend(); inst != e; ++inst)
@@ -248,18 +248,18 @@ protected:
                         if (&(*inst) == LLVMGetLastInstruction(bb))
                         {
                             // Last instruction, apply the Meet Operator to successors
-                            // TODO Jack you bitch
-                            change = TransferFunc(inst, MeetOp(MeetOperands(bb)), _inst_bv_map[(&(*inst))]) || change;
+                            change = TransferFunc(*inst, MeetOp(MeetOperands(*bb)), _inst_bv_map[(&(*inst))]) || change;
                         }        
                         else
                         {
                             // OUT[inst] is the IN of the next instruction
                             auto next = (*inst).getNextNode();
-                            change = TransferFunc(inst, _inst_bv_map[next], _inst_bv_map[(&(*inst))]) || change;
+                            change = TransferFunc(*inst, _inst_bv_map[next], _inst_bv_map[(&(*inst))]) || change;
                         }
                 }
             }
             return change;
+        return true;
         }
 
         // These methods included from LLVM's source code.
