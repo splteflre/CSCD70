@@ -123,6 +123,7 @@ protected:
                                   const BitVector & ibv,
                                   BitVector & obv) override
         {
+                /*
                 BitVector bv_prime = ibv;
                 //const Value inst_v = inst;
 
@@ -143,6 +144,8 @@ protected:
 
                 // @TODO
                 return hasChange;
+                */
+                return false;
         }
         virtual void InitializeDomainFromInstruction(const Instruction & inst) override
         {
