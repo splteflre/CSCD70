@@ -16,7 +16,7 @@ public:
 
         bool operator==(const Variable & other) const
         {
-                return (this->_val == other._val);
+                return (this->getVal() == other.getVal());
         }
 
         const Value * getVal() const { return _val; }
@@ -25,12 +25,11 @@ public:
         friend raw_ostream & operator<<(raw_ostream & outs, const Variable & var);
 }; 
 
-raw_ostream & operator<<(raw_ostream & outs, const Variable & expr)
+raw_ostream & operator<<(raw_ostream & outs, const Variable & var)
 {
         outs << "[";
-        expr._val->printAsOperand(outs, false);
+        var.getVal()->printAsOperand(outs, false);
         outs << "]";
-
         return outs;
 }
 
@@ -78,13 +77,20 @@ public:
         }
         virtual BitVector MeetOp(const meetop_const_range & meet_operands) const override
         {
-                return BitVector(_domain.size());
+                //return BitVector(_domain.size());
+                BitVector ret = BitVector(_domain.size(), false); 
+                
+                for (auto succ : meet_operands) {
+                        Instruction* first_inst = LLVMGetFirstInstruction(succ);
+                        auto first_bv = _inst_bv_map.at(first_inst);
+                        ret |= first_bv;
+                }
+                return ret;
         }
         virtual bool TransferFunc(const Instruction & inst,
                                   const BitVector & ibv,
                                   BitVector & obv) override
         {
-                // @TODO
                 return false;
         }
         virtual void InitializeDomainFromInstruction(const Instruction & inst) override
@@ -102,11 +108,6 @@ public:
                                 catch (const std::invalid_argument & ia_except) {}        
                         }
                 }
-                try
-                {
-                        _domain.emplace(inst);
-                }
-                catch (const std::invalid_argument & ia_except) {}        
         }
 protected:
 };
