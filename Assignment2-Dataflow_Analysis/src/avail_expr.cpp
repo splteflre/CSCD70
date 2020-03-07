@@ -108,6 +108,7 @@ protected:
         virtual BitVector MeetOp(const meetop_const_range & meet_operands) const override
         {
                 // @TODO
+                
                 BitVector ret = BitVector(_domain.size(), true);
 
                 for(auto pred : meet_operands) {
@@ -116,13 +117,32 @@ protected:
                         ret &= last_bv;
                 }
                 return ret;
+                // return BitVector(_domain.size());
         }
         virtual bool TransferFunc(const Instruction & inst,
                                   const BitVector & ibv,
                                   BitVector & obv) override
         {
+                BitVector bv_prime = ibv;
+                //const Value inst_v = inst;
+
+                for (auto prev_exp : _domain){
+                    if (prev_exp.getLHSOperand() == &(cast<Value>(inst)) || prev_exp.getRHSOperand() == &(cast<Value>(inst))){
+                        int idx = std::distance(_domain.begin(), _domain.find(inst));
+                        bv_prime.set(idx, 0); 
+                    }
+                }
+                Expression cur_exp = Expression(inst);
+                auto found = _domain.find(cur_exp);
+                if(found != _domain.end()){
+                    int idx = std::distance(_domain.begin(), found);
+                    bv_prime.set(idx, 1);
+                }
+                bool hasChange = (ibv == bv_prime);
+                obv = bv_prime;
+
                 // @TODO
-                return false;
+                return hasChange;
         }
         virtual void InitializeDomainFromInstruction(const Instruction & inst) override
         {

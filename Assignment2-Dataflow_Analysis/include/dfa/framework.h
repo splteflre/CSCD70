@@ -291,7 +291,6 @@ protected:
                 }
             }
             return change;
-        return true;
         }
 
         // These methods included from LLVM's source code.
@@ -342,7 +341,7 @@ public:
                 do 
                 {
                         is_convergent = true;
-
+                        outs() << "What no\n";
                         if (traverseCFG(F))
                         {
                                 is_convergent = false;
