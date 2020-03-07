@@ -72,7 +72,7 @@ protected:
         /// Mapping from Instruction Pointer to BitVector
         std::unordered_map < const Instruction *, BitVector > _inst_bv_map;
         // Mapping from TDomainElement to bit vector index
-        std::unordered_map< TDomainElement, unsigned > _domain_bit_index_map;
+        //std::unordered_map< TDomainElement, unsigned > _domain_bit_index_map;
         unsigned _most_recent_bit_index = 0;
         /// @brief Return the initial condition.
         virtual BitVector IC() const = 0;
@@ -249,8 +249,14 @@ protected:
                         BasicBlock *bb = *RI;
                         for (const auto & inst : *bb)
                         {
+                                                                
+                                // If first basic block use boundary condition
+                                if (MeetOperands(*bb).begin() == MeetOperands(*bb).end())
+                                {
+                                        change = TransferFunc(inst, BC(), _inst_bv_map[&inst]) || change;
+                                }
                                 // Get current basic block
-                                if ((&inst) == LLVMGetFirstInstruction(bb))
+                                else if ((&inst) == LLVMGetFirstInstruction(bb))
                                 {
                                         // First instruction, apply the Meet Operator to parents
                                         change = TransferFunc(inst, MeetOp(MeetOperands(*bb)), _inst_bv_map[&inst]) || change;
@@ -276,8 +282,13 @@ protected:
                         BasicBlock *bb = *I;
                         for (BasicBlock::reverse_iterator inst = bb->rbegin(), e = bb->rend(); inst != e; ++inst)
                         {
+                                // If first basic block use boundary condition
+                                if (MeetOperands(*bb).begin() == MeetOperands(*bb).end())
+                                {
+                                        change = TransferFunc(*inst, BC(), _inst_bv_map[&(*inst)]) || change;
+                                }
                                 // Last instruction, apply the Meet Operator to successors
-                                if (&(*inst) == LLVMGetLastInstruction(bb))
+                                else if (&(*inst) == LLVMGetLastInstruction(bb))
                                 {
                                         bool waschange = TransferFunc(*inst, MeetOp(MeetOperands(*bb)), _inst_bv_map[(&(*inst))]);
                                         change = change || waschange;
@@ -338,6 +349,7 @@ public:
                 {
                         _inst_bv_map.emplace(&inst, IC());
                 }
+
                 bool is_convergent;
                 do 
                 {
@@ -349,8 +361,7 @@ public:
                 } while (!is_convergent);
 
                 printInstBVMap(F);
-
-                return false;
+return false;
         }
 #undef METHOD_ENABLE_IF_DIRECTION
 };
