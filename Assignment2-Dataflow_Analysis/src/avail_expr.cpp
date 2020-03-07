@@ -76,15 +76,12 @@ protected:
                 // @TODO
                 BitVector ret = BitVector(_domain.size(), true);
 
-                for(auto pred : meet_operands){
-                        
+                for(auto pred : meet_operands) {
                         Instruction* last_inst = LLVMGetLastInstruction(pred);
                         auto last_bv = _inst_bv_map.at(last_inst);
                         ret &= last_bv;
                 }
                 return ret;
-
-                //return BitVector(_domain.size());
         }
         virtual bool TransferFunc(const Instruction & inst,
                                   const BitVector & ibv,
