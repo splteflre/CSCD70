@@ -71,6 +71,9 @@ protected:
          ***********************************************************************/
         /// Mapping from Instruction Pointer to BitVector
         std::unordered_map < const Instruction *, BitVector > _inst_bv_map;
+        // Mapping from TDomainElement to bit vector index
+        std::unordered_map< TDomainElement, unsigned > _domain_bit_index_map;
+        unsigned _most_recent_bit_index = 0;
         /// @brief Return the initial condition.
         virtual BitVector IC() const = 0;
         /// @brief Return the boundary condition.
