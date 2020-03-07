@@ -79,10 +79,15 @@ protected:
         virtual BitVector MeetOp(const meetop_const_range & meet_operands) const override
         {
                 // @TODO
-                auto ret = std::begin(meet_operands);
+                auto first_bb = *std::begin(meet_operands);
+                auto last_inst = LLVMGetLastInstruction(first_bb);
+                auto ret = _inst_bv_map.at(last_inst);
 
-                for(auto & operand : meet_operands){
-                        ret &= operand;
+                for(auto pred : meet_operands){
+                        
+                        auto last_inst = LLVMGetLastInstruction(pred);
+                        auto last_bv = _inst_bv_map.at(last_inst);
+                        ret &= last_bv;
                 }
 
  
