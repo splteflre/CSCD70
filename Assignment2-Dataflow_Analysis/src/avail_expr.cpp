@@ -129,16 +129,16 @@ protected:
                 for (auto prev_exp : _domain){
                     if (prev_exp.getLHSOperand() == &(cast<Value>(inst)) || prev_exp.getRHSOperand() == &(cast<Value>(inst))){
                         int idx = std::distance(_domain.begin(), _domain.find(inst));
-                        bv_prime.set(idx, 0); 
+                        bv_prime.reset(idx); 
                     }
                 }
                 Expression cur_exp = Expression(inst);
                 auto found = _domain.find(cur_exp);
                 if(found != _domain.end()){
                     int idx = std::distance(_domain.begin(), found);
-                    bv_prime.set(idx, 1);
+                    bv_prime.set(idx);
                 }
-                bool hasChange = (ibv == bv_prime);
+                bool hasChange = !(ibv == bv_prime);
                 obv = bv_prime;
 
                 // @TODO
