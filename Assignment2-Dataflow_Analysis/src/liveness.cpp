@@ -91,7 +91,34 @@ public:
                                   const BitVector & ibv,
                                   BitVector & obv) override
         {
-                return false;
+                BitVector use_s = BitVector(_domain.size(), false);
+                if (isa<ReturnInst>(inst))
+                {
+                        obv = BitVector(_domain.size(), false);
+                }
+                else
+                {
+                        BitVector bv_prime = ibv; 
+                        // Check if we use that instruction here.
+                        for (auto iter = inst.op_begin(); iter != inst.op_end(); ++iter)
+                        {
+                                Value * val = *iter;
+                                
+                                if (isa<Instruction>(val) || isa<Argument>(val))
+                                {
+                                        Variable curr_var = Variable(*val);
+                                        auto found = _domain.find(curr_var);
+                                        if (found != _domain.end())
+                                        {
+                                                int idx = std::distance(_domain.begin(), found);
+                                                use_s.set(idx);
+                                        }
+                                }
+                        }
+                }
+                use_s |= ibv;
+                obv = (use_s);
+                return (ibv != obv);
         }
         virtual void InitializeDomainFromInstruction(const Instruction & inst) override
         {

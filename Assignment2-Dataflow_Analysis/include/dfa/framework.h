@@ -81,6 +81,7 @@ protected:
 private:
         /// @brief Dump the domain under @p `mask`. E.g., If `_domian`={%1, %2,
         ///        %3,}, dumping it with `mask`=001 will give {%3,}.
+public:
         void printDomainWithMask(const BitVector & mask) const
         {
                 outs() << "{";
@@ -268,29 +269,29 @@ protected:
         METHOD_ENABLE_IF_DIRECTION(Direction::Backward, bool)
         traverseCFG(const Function & func) 
         {
-            bool change = false;
-            Function & F = const_cast<Function &>(func); // One day I'll figure out how const works with C++ and iterators because this is bullshit
-            for (po_iterator<BasicBlock *> I = po_begin(&F.getEntryBlock()), IE = po_end(&F.getEntryBlock()); I != IE; ++I) {
-                BasicBlock *bb = *I;
-                //for (const auto & inst : *bb)
-                for (BasicBlock::reverse_iterator inst = bb->rbegin(), e = bb->rend(); inst != e; ++inst)
+                bool change = false;
+                Function & F = const_cast<Function &>(func); // One day I'll figure out how const works with C++ and iterators because this is bullshit
+                for (po_iterator<BasicBlock *> I = po_begin(&F.getEntryBlock()), IE = po_end(&F.getEntryBlock()); I != IE; ++I)
                 {
-
-                    // Get current basic block
-                        if (&(*inst) == LLVMGetLastInstruction(bb))
+                        BasicBlock *bb = *I;
+                        for (BasicBlock::reverse_iterator inst = bb->rbegin(), e = bb->rend(); inst != e; ++inst)
                         {
-                            // Last instruction, apply the Meet Operator to successors
-                            change = TransferFunc(*inst, MeetOp(MeetOperands(*bb)), _inst_bv_map[(&(*inst))]) || change;
-                        }        
-                        else
-                        {
-                            // OUT[inst] is the IN of the next instruction
-                            auto next = (*inst).getNextNode();
-                            change = TransferFunc(*inst, _inst_bv_map[next], _inst_bv_map[(&(*inst))]) || change;
+                                // Last instruction, apply the Meet Operator to successors
+                                if (&(*inst) == LLVMGetLastInstruction(bb))
+                                {
+                                        bool waschange = TransferFunc(*inst, MeetOp(MeetOperands(*bb)), _inst_bv_map[(&(*inst))]);
+                                        change = change || waschange;
+                                }
+                                else
+                                {
+                                        // OUT[inst] is the IN of the next instruction
+                                        auto next = (*inst).getNextNode();
+                                        bool waschange = TransferFunc(*inst, _inst_bv_map[next], _inst_bv_map[(&(*inst))]);
+                                        change = change || waschange;
+                                }
                         }
                 }
-            }
-            return change;
+                return change;
         }
 
         // These methods included from LLVM's source code.
@@ -341,7 +342,6 @@ public:
                 do 
                 {
                         is_convergent = true;
-                        outs() << "What no\n";
                         if (traverseCFG(F))
                         {
                                 is_convergent = false;
