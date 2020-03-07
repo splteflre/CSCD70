@@ -16,13 +16,25 @@ public:
 
         bool operator==(const Expression & Expr) const
         {
-                return (this->_opcode == Expr._opcode && this->_lhs == Expr._lhs && this->_rhs == Expr._rhs);
+                if (this->operationIsCommutative())
+                {
+                        bool isExactSame = (this->_opcode == Expr._opcode && this->_lhs == Expr._lhs && this->_rhs == Expr._rhs);
+                        bool switchedOperands = (this->getOpcode() == Expr.getOpcode() && this->getLHSOperand() == Expr.getRHSOperand() 
+                                                 && this->getRHSOperand() == Expr.getLHSOperand());
+                        return isExactSame || switchedOperands;
+                }
+                else
+                {
+                        return (this->_opcode == Expr._opcode && this->_lhs == Expr._lhs && this->_rhs == Expr._rhs);
+                }
         }
 
         unsigned getOpcode() const { return _opcode; }
         const Value * getLHSOperand() const { return _lhs; }
         const Value * getRHSOperand() const { return _rhs; }
 
+        bool operationIsCommutative() const;
+        
         friend raw_ostream & operator<<(raw_ostream & outs, const Expression & expr);
 }; 
 
@@ -33,6 +45,28 @@ raw_ostream & operator<<(raw_ostream & outs, const Expression & expr)
         expr._rhs->printAsOperand(outs, false); outs << "]";
 
         return outs;
+}
+
+bool Expression::operationIsCommutative() const
+{
+        bool out;
+        unsigned operation = this->getOpcode();
+        switch(operation)
+        {
+                case Instruction::Add:
+                case Instruction::FAdd:
+                case Instruction::Mul:
+                case Instruction::FMul:
+                case Instruction::And:
+                case Instruction::Or:
+                case Instruction::Xor:
+                        out = true;
+                        break;
+                default:
+                        out = false;
+                        break;
+        }
+        return out;
 }
 
 }  // namespace anonymous
