@@ -18,7 +18,7 @@ public:
         bool operator==(const Expression & Expr) const
         {
                 // @TODO
-                return (this->_opcode == Expr->_opcode && this->_lhs == Expr->lhs && this->_rhs == Expr->_rhs)
+                return (this->_opcode == Expr._opcode && this->_lhs == Expr._lhs && this->_rhs == Expr._rhs);
                 //return false;
         }
 
@@ -81,7 +81,7 @@ protected:
                 // @TODO
                 auto ret = std::begin(meet_operands);
 
-                for(auto &operand : meet_operands){
+                for(auto & operand : meet_operands){
                         ret &= operand;
                 }
 
