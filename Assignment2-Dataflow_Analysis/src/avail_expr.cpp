@@ -9,17 +9,14 @@ private:
 public:
         Expression(const Instruction & inst)
         {
-                // @TODO
-                _opcode = inst.getOpcode();
-                _lhs = inst.getOperand(0);
-                _rhs = inst.getOperand(1);
+                this->_opcode = inst.getOpcode();
+                this->_lhs = inst.getOperand(0);
+                this->_rhs = inst.getOperand(1);
         }
 
         bool operator==(const Expression & Expr) const
         {
-                // @TODO
                 return (this->_opcode == Expr._opcode && this->_lhs == Expr._lhs && this->_rhs == Expr._rhs);
-                //return false;
         }
 
         unsigned getOpcode() const { return _opcode; }
@@ -68,17 +65,16 @@ class AvailExpr final : public dfa::Framework < Expression,
 protected:
         virtual BitVector IC() const override
         {
-                // @TODO
                 return BitVector(_domain.size(), true);
         }
         virtual BitVector BC() const override
         {
-                // @TODO
                 return BitVector(_domain.size());
         }
         virtual BitVector MeetOp(const meetop_const_range & meet_operands) const override
         {
                 // @TODO
+                /*
                 auto first_bb = *std::begin(meet_operands);
                 auto last_inst = LLVMGetLastInstruction(first_bb);
                 auto ret = _inst_bv_map.at(last_inst);
@@ -89,9 +85,9 @@ protected:
                         auto last_bv = _inst_bv_map.at(last_inst);
                         ret &= last_bv;
                 }
-
- 
                 return ret;
+                */
+                return BitVector(_domain.size());
         }
         virtual bool TransferFunc(const Instruction & inst,
                                   const BitVector & ibv,
@@ -105,7 +101,10 @@ protected:
                 // try to insert the instruction into the domain, and throw an
                 // `invalid_argument` exception if failed
                 try {
-                        _domain.emplace(inst);
+                        if (isa<BinaryOperator>(inst))
+                        {
+                                _domain.emplace(inst);
+                        }
                 } catch (const std::invalid_argument & ia_except) {}
         }
 public:
