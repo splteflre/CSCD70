@@ -74,20 +74,17 @@ protected:
         virtual BitVector MeetOp(const meetop_const_range & meet_operands) const override
         {
                 // @TODO
-                /*
-                auto first_bb = *std::begin(meet_operands);
-                auto last_inst = LLVMGetLastInstruction(first_bb);
-                auto ret = _inst_bv_map.at(last_inst);
+                BitVector ret = BitVector(_domain.size(), true);
 
                 for(auto pred : meet_operands){
                         
-                        auto last_inst = LLVMGetLastInstruction(pred);
+                        Instruction* last_inst = LLVMGetLastInstruction(pred);
                         auto last_bv = _inst_bv_map.at(last_inst);
                         ret &= last_bv;
                 }
                 return ret;
-                */
-                return BitVector(_domain.size());
+
+                //return BitVector(_domain.size());
         }
         virtual bool TransferFunc(const Instruction & inst,
                                   const BitVector & ibv,
