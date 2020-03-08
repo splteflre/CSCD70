@@ -286,7 +286,7 @@ protected:
                         for (BasicBlock::reverse_iterator inst = bb->rbegin(), e = bb->rend(); inst != e; ++inst)
                         {
                                 // If first basic block use boundary condition
-                                if (MeetOperands(*bb).begin() == MeetOperands(*bb).end())
+                                if (MeetOperands(*bb).begin() == MeetOperands(*bb).end() && (&(*inst)) == LLVMGetLastInstruction(bb))
                                 {
                                         change = TransferFunc(*inst, BC(), _inst_bv_map[&(*inst)]) || change;
                                 }
