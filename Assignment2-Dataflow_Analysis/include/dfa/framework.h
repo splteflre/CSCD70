@@ -253,21 +253,18 @@ protected:
                                 // If first basic block use boundary condition
                                 if (MeetOperands(*bb).begin() == MeetOperands(*bb).end() && (&inst) == LLVMGetFirstInstruction(bb))
                                 {
-                                        outs() << "FUCK ME YES WHY \n";
                                         change = TransferFunc(inst, BC(), _inst_bv_map[&inst]) || change;
                                 }
                                 // Get current basic block
                                 else if ((&inst) == LLVMGetFirstInstruction(bb))
                                 {
                                         // First instruction, apply the Meet Operator to parents
-                                        outs() << "FUCK ME TWO IN ELSE IF \n";
                                         change = TransferFunc(inst, MeetOp(MeetOperands(*bb)), _inst_bv_map[&inst]) || change;
                                 }
                                 else
                                 {
                                         // IN[inst] is the OUT of the previous instruction
                                         auto prev = inst.getPrevNode();
-                                        outs() << "WHAT THE FUCK IS PREV: " << *prev << "\n";
                                         change = TransferFunc(inst, _inst_bv_map[prev], _inst_bv_map[&inst]) || change;
                                 }
                         }
