@@ -91,13 +91,16 @@ public:
                                   const BitVector & ibv,
                                   BitVector & obv) override
         {
-                BitVector use_s = BitVector(_domain.size(), false);
+                const BitVector old_obv = obv;
                 if (isa<ReturnInst>(inst))
                 {
                         obv = BitVector(_domain.size(), false);
+                        return (obv != old_obv);
                 }
                 else
                 {
+                        BitVector use_s = BitVector(_domain.size(), false);
+                        BitVector def_s = BitVector(_domain.size(), false);
                         BitVector bv_prime = ibv; 
                         // Check if we use that instruction here.
                         for (auto iter = inst.op_begin(); iter != inst.op_end(); ++iter)
@@ -115,10 +118,24 @@ public:
                                         }
                                 }
                         }
+
+                        if (!(inst.getType()->isVoidTy()))
+                        {
+                                Variable curr_var = Variable(inst);
+                                auto found = _domain.find(curr_var);
+                                if (found != _domain.end())
+                                {
+                                        int idx = std::distance(_domain.begin(), found);
+                                        def_s.set(idx);
+                                }
+                        }
+                        // Compute x - def_s
+                        def_s = def_s.flip();
+                        bv_prime &= def_s;
+                        use_s |= bv_prime;
+                        obv = use_s;
+                        return (obv != old_obv);
                 }
-                use_s |= ibv;
-                obv = (use_s);
-                return (ibv != obv);
         }
         virtual void InitializeDomainFromInstruction(const Instruction & inst) override
         {
@@ -134,6 +151,16 @@ public:
                                 }
                                 catch (const std::invalid_argument & ia_except) {}        
                         }
+                }
+
+                // If inst has a "lvalue", add it to the domain too.
+                if (!(inst.getType()->isVoidTy()))
+                {
+                        try
+                        {
+                                _domain.emplace(inst);
+                        }
+                        catch (const std::invalid_argument & ia_except) {}
                 }
         }
 protected:
