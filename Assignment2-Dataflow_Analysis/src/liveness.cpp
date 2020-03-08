@@ -92,86 +92,78 @@ public:
                                   BitVector & obv) override
         {
                 const BitVector old_obv = obv;
-                if (isa<ReturnInst>(inst))
-                {
-                        obv = BitVector(_domain.size(), false);
-                        return (obv != old_obv);
-                }
-                else
-                {
-                        BitVector use_s = BitVector(_domain.size(), false);
-                        BitVector def_s = BitVector(_domain.size(), false);
-                        BitVector bv_prime = ibv; 
+                BitVector use_s = BitVector(_domain.size(), false);
+                BitVector def_s = BitVector(_domain.size(), false);
+                BitVector bv_prime = ibv; 
 
-                        // Compute use_s
-                        for (auto iter = inst.op_begin(); iter != inst.op_end(); ++iter)
+                // Compute use_s
+                for (auto iter = inst.op_begin(); iter != inst.op_end(); ++iter)
+                {
+                        Value * val = *iter;
+                        
+                        if (isa<Instruction>(val) || isa<Argument>(val))
                         {
-                                Value * val = *iter;
-                                
-                                if (isa<Instruction>(val) || isa<Argument>(val))
-                                {
-                                        Variable curr_var = Variable(*val);
-                                        auto found = _domain.find(curr_var);
-                                        if (found != _domain.end())
-                                        {
-                                                int idx = std::distance(_domain.begin(), found);
-                                                use_s.set(idx);
-                                        }
-                                }
-                        }
-
-                        // Compute def_s, but only if we actually
-                        // have a "lvalue" for this instruction.
-                        // Instructions that don't return (eg: branches)
-                        // obviously don't define anything.
-                        if (!(inst.getType()->isVoidTy()))
-                        {
-                                Variable curr_var = Variable(inst);
+                                Variable curr_var = Variable(*val);
                                 auto found = _domain.find(curr_var);
                                 if (found != _domain.end())
                                 {
                                         int idx = std::distance(_domain.begin(), found);
-                                        def_s.set(idx);
+                                        use_s.set(idx);
                                 }
                         }
+                }
 
-                        // Compute x - def_s
-                        def_s = def_s.flip();
-                        bv_prime &= def_s;
-                        use_s |= bv_prime;
-                        obv = use_s;
-
-                        auto parentBB = inst.getParent();
-                        if (&inst == LLVMGetLastInstruction(parentBB))
+                // Compute def_s, but only if we actually
+                // have a "lvalue" for this instruction.
+                // Instructions that don't return (eg: branches)
+                // obviously don't define anything.
+                if (!(inst.getType()->isVoidTy()))
+                {
+                        Variable curr_var = Variable(inst);
+                        auto found = _domain.find(curr_var);
+                        if (found != _domain.end())
                         {
-                                for (const auto bb_succ : successors(parentBB))
+                                int idx = std::distance(_domain.begin(), found);
+                                def_s.set(idx);
+                        }
+                }
+
+                // Compute x - def_s
+                def_s = def_s.flip();
+                bv_prime &= def_s;
+                use_s |= bv_prime;
+                obv = use_s;
+
+                auto parentBB = inst.getParent();
+                if (&inst == LLVMGetLastInstruction(parentBB))
+                {
+                        for (const auto bb_succ : successors(parentBB))
+                        {
+                                // Walk all phi nodes 
+                                const auto phiInstructions = bb_succ->phis();
+                                for (auto phiIter = phiInstructions.begin(); phiIter != phiInstructions.end(); ++phiIter)
                                 {
-                                        // Walk all phi nodes 
-                                        const auto phiInstructions = bb_succ->phis();
-                                        for (auto phiIter = phiInstructions.begin(); phiIter != phiInstructions.end(); ++phiIter)
+                                        const PHINode * phiInst = &(*phiIter);
+                                        unsigned numIncVal = phiInst->getNumIncomingValues();
+                                        for (unsigned i = 0; i < numIncVal; ++i)
                                         {
-                                                const PHINode * phiInst = &(*phiIter);
-                                                unsigned numIncVal = phiInst->getNumIncomingValues();
-                                                for (unsigned i = 0; i < numIncVal; ++i)
+                                                if (phiInst->getIncomingBlock(i) != parentBB)
                                                 {
-                                                        if (phiInst->getIncomingBlock(i) != parentBB)
+                                                        // Remove from set if value comes from different basic block.
+                                                        Value * otherBlockVal = phiInst->getIncomingValue(i);
+                                                        Variable curr_var = Variable(*otherBlockVal);                                
+                                                        auto found = _domain.find(curr_var);
+                                                        if (found != _domain.end())
                                                         {
-                                                                // Remove from set if value comes from different basic block.
-                                                                Value * otherBlockVal = phiInst->getIncomingValue(i);
-                                                                Variable curr_var = Variable(*otherBlockVal);                                
-                                                                auto found = _domain.find(curr_var);
-                                                                if (found != _domain.end())
-                                                                {
-                                                                        int idx = std::distance(_domain.begin(), found);
-                                                                        obv.reset(idx);
-                                                                }
+                                                                int idx = std::distance(_domain.begin(), found);
+                                                                obv.reset(idx);
                                                         }
                                                 }
                                         }
                                 }
                         }
-                        return (obv != old_obv);
                 }
+                return (obv != old_obv);
         }
         virtual void InitializeDomainFromInstruction(const Instruction & inst) override
         {
