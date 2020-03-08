@@ -123,7 +123,6 @@ protected:
                                   const BitVector & ibv,
                                   BitVector & obv) override
         {
-                /*
                 BitVector bv_prime = ibv;
                 //const Value inst_v = inst;
 
@@ -139,13 +138,21 @@ protected:
                     int idx = std::distance(_domain.begin(), found);
                     bv_prime.set(idx);
                 }
-                bool hasChange = !(ibv == bv_prime);
-                obv = bv_prime;
+                bool hasChange = !(obv == bv_prime);
 
-                // @TODO
-                return hasChange;
+                /*
+                outs() << "================================================================\n"; 
+                outs() << "inst: " << inst << "\n";
+                outs() << "input bit vector\n";
+                printDomainWithMask(ibv);
+                outs() << "\n";
+                outs() << "output bit vector\n";
+                printDomainWithMask(bv_prime);
+                outs() << "\n";
+                outs() << "================================================================\n"; 
                 */
-                return false;
+                obv = bv_prime;
+                return hasChange;
         }
         virtual void InitializeDomainFromInstruction(const Instruction & inst) override
         {
