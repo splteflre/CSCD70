@@ -5,19 +5,32 @@ on: [push]
 jobs:
     build:
         runs-on: ubuntu-18.04
+        env:
+            ACTIVATE_TF_VIRTUALENV : "source /mnt/tensorflow-dev/bin/activate"
+            CMAKE_BUILD : "mkdir -p build && cd build && cmake .. && make"
         steps:
-            - uses: actions/checkout@v1
-            - name: LLVM Docker
-              run: docker-compose build llvm-6_0
+            - uses: actions/checkout@master
+              with:
+                submodules: recursive
+            - name: CSCD70 Docker
+              run: docker-compose build cscd70-dev
+            - name: Install TensorFlow
+              run: docker-compose run --rm -w /mnt/ cscd70-dev /mnt/scripts/installTensorFlow.sh
             - name: Assignment1
-              run: docker-compose run --rm -w /mnt/Assignment1-Introduction_to_LLVM/FunctionInfo llvm-6_0 make
+              run: docker-compose run --rm -w /mnt/Assignment1-Introduction_to_LLVM/FunctionInfo cscd70-dev make
             - name: Assignment2
-              run: docker-compose run --rm -w /mnt/Assignment2-Dataflow_Analysis llvm-6_0 make
+              run: docker-compose run --rm -w /mnt/Assignment2-Dataflow_Analysis cscd70-dev make
+            - name: Assignemnt3
+              run: |
+                   docker-compose run --rm -w /mnt/Assignment3-Loop_Invariant_Code_Motion/LICM cscd70-dev make
+                   docker-compose run --rm -w /mnt/Assignment3-Loop_Invariant_Code_Motion/LINM cscd70-dev bash -c "${CMAKE_BUILD} && ctest -V"
             - name: Tutorial1
-              run: docker-compose run --rm -w /mnt/Tutorial01-Introduction_to_LLVM/Example1-Cpp_Fundamentals llvm-6_0 make
+              run: docker-compose run --rm -w /mnt/Tutorial01-Introduction_to_LLVM/Example1-Cpp_Fundamentals cscd70-dev make
             - name: Tutorial2
               run: |
-                   docker-compose run --rm -w /mnt/Tutorial02-Introduction_to_LLVM_ii/Example1-Transform    llvm-6_0 make
-                   docker-compose run --rm -w /mnt/Tutorial02-Introduction_to_LLVM_ii/Example2-Pass_Manager llvm-6_0 make
+                   docker-compose run --rm -w /mnt/Tutorial02-Introduction_to_LLVM_ii/Example1-Transform    cscd70-dev make
+                   docker-compose run --rm -w /mnt/Tutorial02-Introduction_to_LLVM_ii/Example2-Pass_Manager cscd70-dev make
             - name: Tutorial4
-              run: docker-compose run --rm -w /mnt/Tutorial04-Static_Single_Assignment/Example1-SSA llvm-6_0 make
+              run: docker-compose run --rm -w /mnt/Tutorial04-Static_Single_Assignment/Example1-SSA cscd70-dev make
+            - name: Tutorial8
+              run: docker-compose run --rm -w /mnt/Tutorial08-Loop_Invariant_Code_Motion/Example1-TF_Control_Flow cscd70-dev bash -c "${ACTIVATE_TF_VIRTUALENV} && python3 control_flow_ops.py"
