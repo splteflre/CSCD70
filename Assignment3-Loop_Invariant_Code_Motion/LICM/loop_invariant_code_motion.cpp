@@ -43,3 +43,4 @@ RegisterPass < LoopInvariantCodeMotion > X (
 	"Loop Invariant Code Motion");
 
 }  // namespace anonymous
+//doom
