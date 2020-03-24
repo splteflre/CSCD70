@@ -2,7 +2,7 @@ OPTIMIZER := dfa.so
 
 LLVM_VERSION ?= 6.0
 
-CXXFLAGS := $(shell llvm-config-$(LLVM_VERSION) --cxxflags) -I./include
+CXXFLAGS := $(shell llvm-config-$(LLVM_VERSION) --cxxflags) -fexceptions -I./include
 
 OPT_OBJs := $(subst .cpp,.o,$(wildcard ./src/*.cpp))
 
@@ -29,7 +29,6 @@ all: $(TEST_OPT_LLs) $(TEST_RAW_LLs)
 
 $(OPTIMIZER): $(OPT_OBJs)
 	$(CXX) -dylib -shared $^ -o $@
-
 $(OPT_OBJs): ./include/dfa/framework.h
 
 .PHONY: clean
