@@ -12,35 +12,57 @@ namespace {
 class LoopInvariantCodeMotion final : public LoopPass
 {
 private:
-	DominatorTree * dom_tree;  // owned by `DominatorTreeWrapperPass`
+    DominatorTree * dom_tree;  // owned by `DominatorTreeWrapperPass`
 public:
-        static char ID;
+    static char ID;
+    
+    LoopInvariantCodeMotion() : LoopPass(ID) {}
+    virtual ~LoopInvariantCodeMotion() override {}
 
-	LoopInvariantCodeMotion() : LoopPass(ID) {}
-	virtual ~LoopInvariantCodeMotion() override {}
+    virtual void getAnalysisUsage(AnalysisUsage & AU) const
+    {
+        AU.addRequired < DominatorTreeWrapperPass > ();
+        AU.setPreservesCFG();
+    }
 
-        virtual void getAnalysisUsage(AnalysisUsage & AU) const
-	{
-		AU.addRequired < DominatorTreeWrapperPass > ();
-		AU.setPreservesCFG();
-	}
-
-	/// @todo Finish the implementation of this method.
-        virtual bool runOnLoop(Loop * L, LPPassManager & LPM)
-	{
-		dom_tree = &(getAnalysis < DominatorTreeWrapperPass > ().getDomTree());
-
-		// @TODO
-
-                return false;
+    /// @todo Finish the implementation of this method.
+    virtual bool runOnLoop(Loop * L, LPPassManager & LPM)
+    {
+        dom_tree = &(getAnalysis < DominatorTreeWrapperPass > ().getDomTree());
+        /*
+        for (auto node = GraphTraits<DominatorTree *>::nodes_begin(dom_tree); node != GraphTraits<DominatorTree *>::nodes_end(dom_tree); ++node)
+        {
+            BasicBlock * BB = node->getBlock();
+            outs() << "BASIC BLOCK "  << BB->getName() << "\n";
+            for (auto & I : (*BB))
+            {
+                I.print(outs());
+                outs() << "\n";
+            }
         }
+        */
+        auto header_block = L->getLoopPreheader();
+        if (!header_block)
+        {
+            return false;
+        }
+        else
+        {
+            //TODO
+        }
+        return false;
+    }
+
+    bool isInstructionInvariant(Instruction * I, Loop * L)
+    {
+        return false;
+    }
 };
 
 char LoopInvariantCodeMotion::ID = 0;
 
 RegisterPass < LoopInvariantCodeMotion > X (
-	"loop-invariant-code-motion",
-	"Loop Invariant Code Motion");
+    "loop-invariant-code-motion",
+    "Loop Invariant Code Motion");
 
 }  // namespace anonymous
-//doom
