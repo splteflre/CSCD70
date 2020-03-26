@@ -33,11 +33,9 @@ public:
         dom_tree = &(getAnalysis < DominatorTreeWrapperPass > ().getDomTree());
 
         // Initialize a set for all basic blocks in the loop
-        std::set<BlockT> bbs; 
         for (auto bb : L.getBlocks()){
-            bbs.insert(bb); 
+            bb_set.insert(bb); 
         }
-        bb_set = bbs;
         /*
         for (auto node = GraphTraits<DominatorTree *>::nodes_begin(dom_tree); node != GraphTraits<DominatorTree *>::nodes_end(dom_tree); ++node)
         {
@@ -60,6 +58,9 @@ public:
         {
         }
         return false;
+
+        // Clear set of basic blocks so function can be run on other loops
+        bb_set.clear();
     }
 
     bool isInstructionInvariant(Instruction * I, Loop * L)
