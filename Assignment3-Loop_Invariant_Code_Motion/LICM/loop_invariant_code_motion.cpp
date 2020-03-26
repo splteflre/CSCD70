@@ -78,12 +78,32 @@ public:
      */
     bool isInstructionLoopInvariant(Instruction * inst, std::unordered_map<Instruction *, bool> & invar_map);
 
-    bool dominateExits(Instruction * I){
-        return false;
+    /*
+     * Check if an instruction dominates all of its uses
+     */
+    /*
+    bool dominateUses(Instruction * I) // Shouldn't everything dominate all uses anyways??
+    {
+        return AllUsesDominatedByBlock(I, I->getParent(), dom_tree);
     }
+    */
 
-    bool dominateUses(Instruction * I){ // Shouldn't everything dominate all uses anyways??
-        return false;
+    /*
+     * Check if an instruction dominates all exit blocks
+     */
+    bool dominateExits(Instruction *I, Loop * L)
+    {
+        SmallVector<BasicBlock*, 8> ExitingBlocks;
+        L->getExitingBlocks(ExitingBlocks);
+
+        for(auto exit : ExitingBlocks)
+        {
+            if (!dom_tree->dominates(I, exit))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     /*
