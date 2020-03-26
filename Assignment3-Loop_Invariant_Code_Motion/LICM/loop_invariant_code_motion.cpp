@@ -83,20 +83,25 @@ public:
     }
 
     bool dominateUses(Instruction * I){ // Shouldn't everything dominate all uses anyways??
-        return false:
+        return false;
     }
 
     /*
-     * Return true if instruction is a branch, return, or...
+     * Return true if instruction is a branch, return, or phi(?)
      * Such instructions should NEVER be hoisted.
      */
-    inline bool doesInstructionAlterFlow(Instruction * inst);
+    static inline bool doesInstructionAlterFlow(Instruction * inst);
 };
 
 
 bool LoopInvariantCodeMotion::isInstructionLoopInvariant(Instruction * inst, std::unordered_map<Instruction *, bool> & invar_map)
 {
-    outs() << "Checking "; inst->print(outs()); outs() << "\n";
+    if (doesInstructionAlterFlow(inst))
+    {
+        invar_map.insert({inst, false});
+        return false;
+    }
+
     // Check if all operands are defined outsidse the loop
     bool all_ops_outside = true;
     bool all_ops_invariant_and_defined_once = true;
@@ -107,46 +112,61 @@ bool LoopInvariantCodeMotion::isInstructionLoopInvariant(Instruction * inst, std
         if (operand_inst != NULL)
         {
             BasicBlock * parent_bblock = operand_inst->getParent();
-            if (bb_set.find(parent_bblock) != bb_set.end()) // If parent is not in loop
+            if (bb_set.find(parent_bblock) != bb_set.end()) // If parent is in loop
             {
                 all_ops_outside = false;
             }
+        }
+    }
+
+    for (auto it = inst->op_begin(); it != inst->op_end(); ++it)
+    {
+        Value * operand_val = *it;
+        Instruction * operand_inst = dyn_cast<Instruction>(operand_val);
+        if (operand_inst != NULL)
+        {
+            /* Instructions may also be invariant if operands themselves are loop invariant with one definition inside the loop.
+             * In SSA form, everything only has one definition, period. So instead we check if it is a PHI Instruction that is
+             * inside the loop.
+             */
+            bool is_curr_operand_invariant = false;
+            if (invar_map.find(operand_inst) != invar_map.end())
+            {
+                is_curr_operand_invariant = invar_map[operand_inst];
+            }
             else
             {
-                /* Check if operands themselves are loop invariant with one definition inside the loop.
-                 * In SSA form, everything only has one definition, period, so we instead check if it is 
-                 * a phi instruction instead.
-                 */
-                bool is_curr_operand_invariant = false;
-                if (invar_map.find(operand_inst) != invar_map.end())
-                {
-                    is_curr_operand_invariant = invar_map[operand_inst];
-                }
-                else
-                {
-                    is_curr_operand_invariant = this->isInstructionLoopInvariant(operand_inst, invar_map); 
-                }
+                is_curr_operand_invariant = this->isInstructionLoopInvariant(operand_inst, invar_map); 
+            }
 
-                if (is_curr_operand_invariant)
+            if (is_curr_operand_invariant)
+            {
+                if (auto * phi_inst = dyn_cast<PHINode>(operand_inst))
                 {
-                    if (auto * phi_inst = dyn_cast<PHINode>(operand_inst))
+                    // If it is a phi instruction, it's still fine as long as the phi instruction is defined outside the loop
+                    BasicBlock * phi_parent = phi_inst->getParent(); 
+                    if (bb_set.find(phi_parent) != bb_set.end())
                     {
-                        // If it is a phi instruction, it's still fine as long as the phi instruction is defined outside the loop
-                        BasicBlock * phi_parent = phi_inst->getParent(); 
-                        if (bb_set.find(phi_parent) != bb_set.end())
-                        {
-                            all_ops_invariant_and_defined_once = false;
-                        }
+                        all_ops_invariant_and_defined_once = false;
                     }
                 }
-                else
-                {
-                    all_ops_invariant_and_defined_once = false;
-                }
+            }
+            else
+            {
+                all_ops_invariant_and_defined_once = false;
             }
         }
     }
+
+    invar_map.insert({inst, (all_ops_outside || all_ops_invariant_and_defined_once)});
     return all_ops_outside || all_ops_invariant_and_defined_once;
+}
+
+
+inline bool LoopInvariantCodeMotion::doesInstructionAlterFlow(Instruction * inst)
+{
+    return (isa<BranchInst>(inst) || isa<IndirectBrInst>(inst) || isa<ReturnInst>(inst)
+            || isa<PHINode>(inst));
 }
 
 char LoopInvariantCodeMotion::ID = 0;
