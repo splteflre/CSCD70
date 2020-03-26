@@ -3,6 +3,7 @@
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/Support/raw_ostream.h>
+#include <set>
 
 using namespace llvm;
 
@@ -13,6 +14,7 @@ class LoopInvariantCodeMotion final : public LoopPass
 {
 private:
     DominatorTree * dom_tree;  // owned by `DominatorTreeWrapperPass`
+    std::set<BlockT> bb_set;
 public:
     static char ID;
     
@@ -29,6 +31,13 @@ public:
     virtual bool runOnLoop(Loop * L, LPPassManager & LPM)
     {
         dom_tree = &(getAnalysis < DominatorTreeWrapperPass > ().getDomTree());
+
+        // Initialize a set for all basic blocks in the loop
+        std::set<BlockT> bbs; 
+        for (auto bb : L.getBlocks()){
+            bbs.insert(bb); 
+        }
+        bb_set = bbs;
         /*
         for (auto node = GraphTraits<DominatorTree *>::nodes_begin(dom_tree); node != GraphTraits<DominatorTree *>::nodes_end(dom_tree); ++node)
         {
@@ -64,6 +73,9 @@ public:
     {
         return false;
     }
+
+
+    
 };
 
 char LoopInvariantCodeMotion::ID = 0;
