@@ -68,6 +68,14 @@ public:
         return false;
     }
 
+    bool dominateExits(Instruction * I){
+        return false;
+    }
+
+    bool dominateUses(Instruction * I){
+        return false:
+    }
+
 
     
 };
