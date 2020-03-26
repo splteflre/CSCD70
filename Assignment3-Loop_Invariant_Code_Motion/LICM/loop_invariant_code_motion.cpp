@@ -49,6 +49,13 @@ public:
         }
         else
         {
+            for (auto BB : L->getBlocks())
+            {
+                for (auto I : BB)
+                {
+                    // TODO: Check if Instruction I can be yeeted to loop preheader
+                }
+            }
         }
         return false;
     }
