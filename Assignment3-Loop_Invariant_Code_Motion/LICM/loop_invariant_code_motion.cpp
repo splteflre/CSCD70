@@ -78,6 +78,14 @@ public:
      */
     bool isInstructionLoopInvariant(Instruction * inst, std::unordered_map<Instruction *, bool> & invar_map);
 
+    bool dominateExits(Instruction * I){
+        return false;
+    }
+
+    bool dominateUses(Instruction * I){ // Shouldn't everything dominate all uses anyways??
+        return false:
+    }
+
     /*
      * Return true if instruction is a branch, return, or...
      * Such instructions should NEVER be hoisted.
