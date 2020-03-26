@@ -44,11 +44,11 @@ public:
         auto header_block = L->getLoopPreheader();
         if (!header_block)
         {
+            // If we cannot insert a preheader, don't bother.
             return false;
         }
         else
         {
-            //TODO
         }
         return false;
     }
