@@ -72,6 +72,23 @@ public:
         return false;
     }
 
+    /*
+     * Check if Instruction at inst is loop invariant. Use memoization to 
+     * speed up process.
+     */
+    bool isInstructionLoopInvariant(Instruction * inst, std::unordered_map<Instruction *, bool> & invar_map);
+    }
+
+    /*
+     * Check if an instruction dominates all of its uses
+     */
+    bool dominateUses(Instruction * I){ // Shouldn't everything dominate all uses anyways??
+        return AllUsesDominatedByBlock(I, I.getParent(), dom_tree);
+    }
+
+    /*
+     * Check if an instruction dominates all exit blocks
+     */
     bool dominateExits(Instruction *I, Loop * L){
 
         SmallVector<BasicBlock*, 8> ExitingBlocks;
@@ -84,16 +101,6 @@ public:
         }
 
         return true;
-    }
-    /*
-     * Check if Instruction at inst is loop invariant. Use memoization to 
-     * speed up process.
-     */
-    bool isInstructionLoopInvariant(Instruction * inst, std::unordered_map<Instruction *, bool> & invar_map);
-    }
-
-    bool dominateUses(Instruction * I){ // Shouldn't everything dominate all uses anyways??
-        return false:
     }
 
     /*
