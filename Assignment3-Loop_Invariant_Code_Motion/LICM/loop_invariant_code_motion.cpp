@@ -68,8 +68,18 @@ public:
         return false;
     }
 
-    bool dominateExits(Instruction * I){
-        return false;
+    bool dominateExits(Instruction *I, Loop * L){
+
+        SmallVector<BasicBlock*, 8> ExitingBlocks;
+        L->getExitingBlocks(ExitingBlocks);
+
+        for(auto exit : ExitingBlocks){
+            if (!dom_tree.dominates(I, exit)){
+                return false;
+            }
+        }
+
+        return true;
     }
 
     bool dominateUses(Instruction * I){
