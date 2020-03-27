@@ -68,7 +68,7 @@ public:
                     }
                     bool dominates_uses = dominateUsesWithinLoop(I);
                     bool dominates_exits = dominateExits(I, L);
-                    if (is_invaraint && dominates_uses && dominates_exits)
+                    if (is_invariant && dominates_uses && dominates_exits)
                     {
                         yeetable_instructions.push_back(I);
                     }
