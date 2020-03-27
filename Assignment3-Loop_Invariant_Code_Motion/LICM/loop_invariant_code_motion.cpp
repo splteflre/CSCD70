@@ -32,7 +32,6 @@ public:
     virtual bool runOnLoop(Loop * L, LPPassManager & LPM)
     {
         dom_tree = &(getAnalysis < DominatorTreeWrapperPass > ().getDomTree());
-
         auto header_block = L->getLoopPreheader();
         if (!header_block)
         {
@@ -43,6 +42,9 @@ public:
         {
             // Initialize a set for all basic blocks in the loop
             bb_set.clear();
+
+            // Instructions that we can yeet to the preheader
+            SmallVector<Instruction*, 24> yeetable_instructions;
 
             for (auto bb : L->getBlocks())
             {
@@ -64,6 +66,12 @@ public:
                     {
                         I->print(outs()); outs() << " is not invariant by our algorithm\n";
                     }
+                    bool dominates_uses = dominateUsesWithinLoop(I);
+                    bool dominates_exits = dominateExits(I, L);
+                    if (is_invaraint && dominates_uses && dominates_exits)
+                    {
+                        yeetable_instructions.push_back(I);
+                    }
                 }
             }
         }
@@ -79,14 +87,9 @@ public:
     bool isInstructionLoopInvariant(Instruction * inst, std::unordered_map<Instruction *, bool> & invar_map);
 
     /*
-     * Check if an instruction dominates all of its uses
+     * Check if an instruction dominates all of its uses within a loop
      */
-    /*
-    bool dominateUses(Instruction * I) // Shouldn't everything dominate all uses anyways??
-    {
-        return AllUsesDominatedByBlock(I, I->getParent(), dom_tree);
-    }
-    */
+    bool dominateUsesWithinLoop(Instruction * I);
 
     /*
      * Check if an instruction dominates all exit blocks
@@ -182,6 +185,24 @@ bool LoopInvariantCodeMotion::isInstructionLoopInvariant(Instruction * inst, std
     return all_ops_outside || all_ops_invariant_and_defined_once;
 }
 
+bool LoopInvariantCodeMotion::dominateUsesWithinLoop(Instruction * I)
+{
+    for (User * U : I->users())
+    {
+        if (auto used_inst = dyn_cast<Instruction>(U))
+        {
+            if (this->bb_set.find(used_inst->getParent()) != this->bb_set.end()) // We are only interested in uses within the loop
+            {
+                if (!dom_tree->dominates(I, used_inst))
+                {
+                    outs() << "        Instruction does not dominate "; used_inst->print(outs()); outs() << "\n";
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
 
 inline bool LoopInvariantCodeMotion::doesInstructionAlterFlow(Instruction * inst)
 {
