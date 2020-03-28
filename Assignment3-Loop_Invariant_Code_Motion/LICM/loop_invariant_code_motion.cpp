@@ -2,6 +2,7 @@
 #include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/Support/raw_ostream.h>
 #include <set>
 #include <unordered_map>
@@ -73,6 +74,16 @@ public:
                         yeetable_instructions.push_back(I);
                     }
                 }
+            }
+
+            // Move instructions to the header
+            Instruction * insertion_point = header_block->getFirstNonPHIOrDbg();
+            IRBuilder<> builder(insertion_point);
+            builder.SetInsertPoint(insertion_point);
+            for (auto inst : yeetable_instructions)
+            {
+                inst->removeFromParent();
+                builder.Insert(inst);
             }
         }
         // Clear set of basic blocks so function can be run on other loops
