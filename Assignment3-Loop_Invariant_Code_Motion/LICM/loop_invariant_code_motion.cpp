@@ -77,7 +77,7 @@ public:
             }
 
             // Move instructions to the header
-            Instruction * insertion_point = header_block->getFirstNonPHIOrDbg();
+            Instruction * insertion_point =  LLVMGetLastInstruction(header_block);
             IRBuilder<> builder(insertion_point);
             builder.SetInsertPoint(insertion_point);
             for (auto inst : yeetable_instructions)
@@ -89,6 +89,13 @@ public:
         // Clear set of basic blocks so function can be run on other loops
         bb_set.clear();
         return false;
+    }
+    static Instruction * LLVMGetLastInstruction(const BasicBlock * Block)
+    {
+        BasicBlock::const_iterator I = Block->end();
+                if (I == Block->begin())
+                        return nullptr;
+        return const_cast<Instruction *>(&(*(--I)));
     }
 
     /*
