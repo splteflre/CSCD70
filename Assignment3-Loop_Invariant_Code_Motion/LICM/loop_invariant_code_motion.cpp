@@ -76,7 +76,12 @@ public:
                 }
             }
 
-            // Move instructions to the header
+            // Move instructions to the header. Actually to be specific we move it
+            // to the END of the header, in case the header has any operations
+            // that reads from the variable that is being hoisted.
+            // 
+            // We need to move them in the order in which they are found. That way
+            // all dependencies are preserved.
             Instruction * insertion_point =  LLVMGetLastInstruction(header_block);
             IRBuilder<> builder(insertion_point);
             builder.SetInsertPoint(insertion_point);
